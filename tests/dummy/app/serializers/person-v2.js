@@ -50,61 +50,53 @@ export default class PersonV2Serializer extends JSONSerializer {
    * Ensures fragment models are pushed into the store alongside the parent
    */
   normalizeResponse(store, primaryModelClass, payload, id, requestType) {
-    // Transform the payload to JSON:API format with included
-    const transformedPayload = {
-      data: {
-        type: 'person-v2',
-        id: payload.id,
-        attributes: {
-          name: payload.name,
-          title: payload.title
-        },
-        relationships: {}
-      },
-      included: []
-    };
+    // Ensure ID is a string
+    const recordId = String(payload.id || id);
 
-    // Process addresses as separate included resources
+    // First, push fragment records into the store
     if (payload.addresses && Array.isArray(payload.addresses)) {
-      const addressRefs = [];
-
       payload.addresses.forEach((addressData, index) => {
-        const fragmentId = generateFragmentId('person-v2', payload.id, 'addresses', index);
+        const fragmentId = generateFragmentId('person-v2', recordId, 'addresses', index);
 
-        // Add to included
-        transformedPayload.included.push({
-          type: 'address-v2',
-          id: fragmentId,
-          attributes: {
-            street: addressData.street,
-            city: addressData.city,
-            state: addressData.state,
-            zip: addressData.zip,
-            __fragmentPosition: index,
-            __fragmentParentType: 'person-v2',
-            __fragmentParentId: payload.id,
-            __fragmentKey: 'addresses'
+        // Push each fragment directly into the store
+        store.push({
+          data: {
+            type: 'address-v2',
+            id: fragmentId,
+            attributes: {
+              street: addressData.street,
+              city: addressData.city,
+              state: addressData.state,
+              zip: addressData.zip,
+              __fragmentPosition: index,
+              __fragmentParentType: 'person-v2',
+              __fragmentParentId: recordId,
+              __fragmentKey: 'addresses'
+            }
           }
         });
-
-        // Add to relationship references
-        addressRefs.push({
-          type: 'address-v2',
-          id: fragmentId
-        });
       });
-
-      transformedPayload.data.relationships.addresses = {
-        data: addressRefs
-      };
     }
 
-    // Call super with transformed payload
+    // Create modified payload with address IDs for relationship
+    const modifiedPayload = {
+      ...payload,
+      id: recordId
+    };
+
+    // Replace addresses array with IDs
+    if (payload.addresses && Array.isArray(payload.addresses)) {
+      modifiedPayload.addresses = payload.addresses.map((_, index) =>
+        generateFragmentId('person-v2', recordId, 'addresses', index)
+      );
+    }
+
+    // Call super with modified payload (addresses are now just IDs)
     return super.normalizeResponse(
       store,
       primaryModelClass,
-      transformedPayload,
-      id,
+      modifiedPayload,
+      recordId,
       requestType
     );
   }
