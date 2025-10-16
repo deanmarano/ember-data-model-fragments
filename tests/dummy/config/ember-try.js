@@ -8,6 +8,30 @@ module.exports = async function () {
     packageManager: 'pnpm',
     scenarios: [
       {
+        name: 'ember-data-4.6',
+        npm: {
+          devDependencies: {
+            'ember-data': '~4.6.0',
+          },
+        },
+      },
+      {
+        name: 'ember-data-4.12',
+        npm: {
+          devDependencies: {
+            'ember-data': '~4.12.0',
+          },
+        },
+      },
+      {
+        name: 'ember-data-5.3',
+        npm: {
+          devDependencies: {
+            'ember-data': '~5.3.0',
+          },
+        },
+      },
+      {
         name: 'ember-lts-5.8',
         npm: {
           devDependencies: {
