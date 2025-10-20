@@ -21,6 +21,61 @@ Use the following table to decide which version of this project to use with your
 | >= v3.28.x < v4.6.x  | v6.x            | 14+     |
 | >= v4.7.x            | Not Compatible  |         |
 
+## :sparkles: What's New: Ordered IDs (Beta)
+
+**v6.1.0-beta.1** introduces an experimental new approach to fragments that eliminates private Ember Data API dependencies. This is an **opt-in feature** that lays the groundwork for Ember Data 4.12+ and 5.x support.
+
+### Why Ordered IDs?
+
+The current implementation uses Ember Data's private `RecordData` API, which was removed in Ember Data 4.7+. The new **ordered IDs** approach uses only public Ember Data APIs (`@attr`, `@hasMany`, `JSONSerializer`), making fragments future-proof.
+
+### How It Works
+
+Instead of id-less fragments, each fragment gets a composite ID like `person:123:addresses:0`. This provides stable identity while maintaining the same developer experience.
+
+**Current approach (still works):**
+```javascript
+import { fragmentArray } from 'ember-data-model-fragments/attributes';
+
+export default class PersonModel extends Model {
+  @fragmentArray('address') addresses;  // Uses RecordData
+}
+```
+
+**New approach (opt-in):**
+```javascript
+import { fragmentArray } from 'ember-data-model-fragments/attributes';
+
+export default class PersonModel extends Model {
+  @fragmentArray('address', { orderedIds: true }) addresses;  // Uses ordered IDs
+}
+```
+
+### Benefits
+
+- **Zero private API usage** - Only uses public Ember Data APIs
+- **Stable fragment identity** - Each fragment has a unique ID
+- **Better conflict detection** - Can detect server reordering vs data changes
+- **Future-proof** - Paves the way for ED 4.12+ and 5.x support
+- **No breaking changes** - Existing code continues to work exactly as before
+
+### Migration Strategy
+
+This feature enables gradual migration:
+
+1. **Install v6.1.0-beta.1** - No code changes required, all existing fragments continue working
+2. **Migrate incrementally** - Add `orderedIds: true` to models one at a time
+3. **Test as you go** - Both approaches coexist peacefully in the same app
+4. **Future upgrade** - Once fully migrated, you'll be ready for Ember Data 4.12+/5.x
+
+See [GRADUAL_MIGRATION_STRATEGY.md](GRADUAL_MIGRATION_STRATEGY.md) for detailed migration guide.
+
+### Status
+
+This is a **beta feature**. The API may change based on community feedback. The old RecordData-based approach will be supported until v7.0.0 (12-18 months).
+
+---
+
 ## Installation
 
 To install as an Ember CLI addon:

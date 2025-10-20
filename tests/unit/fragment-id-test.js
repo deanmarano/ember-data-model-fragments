@@ -2,7 +2,7 @@ import { module, test } from 'qunit';
 import { setupTest } from 'ember-qunit';
 import { generateFragmentId, parseFragmentId, isFragmentId } from 'ember-data-model-fragments/utils/fragment-id';
 
-module('Unit | POC | Ordered IDs', function (hooks) {
+module('Unit | Utility | Fragment ID', function (hooks) {
   setupTest(hooks);
 
   module('Fragment ID Utilities', function () {

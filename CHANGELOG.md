@@ -1,5 +1,75 @@
 # Changelog
 
+## v6.1.0-beta.1 (TBD)
+
+### :rocket: Enhancement
+
+- [#TBD](https://github.com/adopted-ember-addons/ember-data-model-fragments/pull/TBD) Add ordered IDs support (opt-in via `orderedIds: true` option)
+
+#### New Features
+
+**Ordered IDs for Fragments (Opt-In)**
+
+This release introduces an experimental new approach to fragments using ordered composite IDs. This is an **opt-in feature** that allows fragments to work with only public Ember Data APIs, paving the way for Ember Data 4.12+ and 5.x support.
+
+**Key Benefits:**
+- **Zero private API usage** - Uses only `@attr`, `@hasMany`, and `JSONSerializer`
+- **Stable fragment identity** - Each fragment gets a unique ID like `person:123:addresses:0`
+- **Better conflict detection** - Can detect server-side reordering vs data changes
+- **Future-proof** - Compatible with Ember Data 4.6, 4.12, and 5.x
+- **No breaking changes** - Existing code continues to work exactly as before
+
+**How to Use:**
+
+```javascript
+// Before (current approach - still works)
+import { fragmentArray } from 'ember-data-model-fragments/attributes';
+
+export default class PersonModel extends Model {
+  @fragmentArray('address') addresses;  // Uses RecordData
+}
+
+// New (opt-in ordered IDs approach)
+import { fragmentArray } from 'ember-data-model-fragments/attributes';
+
+export default class PersonModel extends Model {
+  @fragmentArray('address', { orderedIds: true }) addresses;  // Uses ordered IDs
+}
+```
+
+**Migration Strategy:**
+
+This release allows gradual migration:
+1. Install v6.1.0-beta.1 (no breaking changes)
+2. Migrate models one at a time by adding `orderedIds: true`
+3. Test thoroughly as you go
+4. Once all models migrated, you can upgrade to Ember Data 4.12+ or 5.x
+
+See [GRADUAL_MIGRATION_STRATEGY.md](GRADUAL_MIGRATION_STRATEGY.md) for detailed migration guide.
+
+**Implementation Details:**
+
+- Added fragment ID utilities (`addon/utils/fragment-id.js`)
+- Fragment models using `orderedIds: true` are treated as regular Ember Data models
+- Serializers automatically convert between nested JSON (server) and fragment models (client)
+- Dirty tracking propagates from fragments to parent records
+- Both old and new approaches can coexist in the same application
+
+**Status:** This is a beta feature. We encourage early adopters to try it and provide feedback. The old RecordData-based approach will be supported until v7.0.0.
+
+#### :memo: Documentation
+
+- Added `POC_RESULTS.md` - Proof of concept results and test documentation
+- Added `ORDERED_IDS_RFC.md` - Detailed RFC explaining ordered IDs approach
+- Added `GRADUAL_MIGRATION_STRATEGY.md` - Step-by-step migration guide
+- Added `DUAL_VERSION_APPROACH.md` - Technical design for coexisting implementations
+
+#### Committers: 1
+
+- Dean Marano ([@deanmarano](https://github.com/deanmarano))
+
+---
+
 ### v5.0.0-beta.3 (December 22, 2021)
 
 ## v6.0.10 (2024-05-22)
