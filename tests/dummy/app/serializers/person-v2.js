@@ -53,52 +53,62 @@ export default class PersonV2Serializer extends JSONSerializer {
     // Ensure ID is a string
     const recordId = String(payload.id || id);
 
-    // First, push fragment records into the store
+    // Build included array for fragments
+    const included = [];
+    const addressIds = [];
+
     if (payload.addresses && Array.isArray(payload.addresses)) {
       payload.addresses.forEach((addressData, index) => {
         const fragmentId = generateFragmentId('person-v2', recordId, 'addresses', index);
 
-        // Push each fragment directly into the store
-        store.push({
-          data: {
-            type: 'address-v2',
-            id: fragmentId,
-            attributes: {
-              street: addressData.street,
-              city: addressData.city,
-              state: addressData.state,
-              zip: addressData.zip,
-              __fragmentPosition: index,
-              __fragmentParentType: 'person-v2',
-              __fragmentParentId: recordId,
-              __fragmentKey: 'addresses'
-            }
+        const fragmentData = {
+          type: 'address-v2',
+          id: fragmentId,
+          attributes: {
+            street: addressData.street,
+            city: addressData.city,
+            state: addressData.state,
+            zip: addressData.zip,
+            __fragmentPosition: index,
+            __fragmentParentType: 'person-v2',
+            __fragmentParentId: recordId,
+            __fragmentKey: 'addresses'
           }
-        });
+        };
+
+        // Push fragment into store
+        store.push({ data: fragmentData });
+
+        // Add to included for response
+        included.push(fragmentData);
+
+        // Track ID for relationship
+        addressIds.push(fragmentId);
       });
     }
 
     // Create modified payload with address IDs for relationship
     const modifiedPayload = {
       ...payload,
-      id: recordId
+      id: recordId,
+      addresses: addressIds
     };
 
-    // Replace addresses array with IDs
-    if (payload.addresses && Array.isArray(payload.addresses)) {
-      modifiedPayload.addresses = payload.addresses.map((_, index) =>
-        generateFragmentId('person-v2', recordId, 'addresses', index)
-      );
-    }
-
-    // Call super with modified payload (addresses are now just IDs)
-    return super.normalizeResponse(
+    // Call super with modified payload
+    const normalized = super.normalizeResponse(
       store,
       primaryModelClass,
       modifiedPayload,
       recordId,
       requestType
     );
+
+    // Add included to normalized response
+    if (included.length > 0) {
+      normalized.included = included;
+    }
+
+    return normalized;
   }
 
   /**

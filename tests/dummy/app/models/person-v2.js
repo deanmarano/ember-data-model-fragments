@@ -1,5 +1,4 @@
 import Model, { attr, hasMany } from '@ember-data/model';
-import { computed } from '@ember/object';
 
 /**
  * POC: Person model with fragment relationships
@@ -22,8 +21,10 @@ export default class PersonV2Model extends Model {
    *
    * This ensures that changes to fragments mark the parent as dirty,
    * preserving the original fragment behavior.
+   *
+   * Note: Using volatile() to ensure this always recalculates when accessed,
+   * as relationship dirty tracking can be tricky across Ember Data versions.
    */
-  @computed('currentState.isDirty', 'addresses.@each.hasDirtyAttributes')
   get hasDirtyAttributes() {
     // Check regular attributes
     if (super.hasDirtyAttributes) {

@@ -20,6 +20,7 @@ module.exports = async function () {
         npm: {
           devDependencies: {
             'ember-data': '~4.12.0',
+            '@ember/string': '^3.0.0',
           },
         },
       },
@@ -28,6 +29,7 @@ module.exports = async function () {
         npm: {
           devDependencies: {
             'ember-data': '~5.3.0',
+            'ember-inflector': '^6.0.0',
           },
         },
       },
