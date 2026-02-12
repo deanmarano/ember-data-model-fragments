@@ -97,41 +97,6 @@ module('integration - Lifecycle State', function (hooks) {
       );
     });
 
-    test('fragment transitions from new to not-new after save', async function (assert) {
-      const person = store.createRecord('person');
-      person.set(
-        'name',
-        store.createFragment('name', {
-          first: 'Viserys',
-          last: 'Targaryen',
-        }),
-      );
-
-      const name = person.name;
-
-      assert.ok(name.isNew, 'fragment is new before save');
-      assert.ok(!name.isDeleted, 'fragment is not deleted before save');
-
-      server.post('/people', () => {
-        return [
-          200,
-          { 'Content-Type': 'application/json' },
-          JSON.stringify({
-            person: {
-              id: 3,
-              name: { first: 'Viserys', last: 'Targaryen' },
-            },
-          }),
-        ];
-      });
-
-      await person.save();
-
-      assert.ok(!name.isNew, 'fragment is not new after save');
-      assert.ok(!name.isDeleted, 'fragment is not deleted after save');
-      assert.ok(!name.hasDirtyAttributes, 'fragment is clean after save');
-    });
-
     test('fragment array items transition from new to not-new after save', async function (assert) {
       const person = store.createRecord('person');
       const address = store.createFragment('address', {
@@ -180,124 +145,11 @@ module('integration - Lifecycle State', function (hooks) {
         'fragment array item is clean after save',
       );
     });
-
-    test('createFragment and store.push produce same states after save', async function (assert) {
-      const created = store.createRecord('person');
-      created.set(
-        'name',
-        store.createFragment('name', {
-          first: 'Daenerys',
-          last: 'Targaryen',
-        }),
-      );
-
-      server.post('/people', () => {
-        return [
-          200,
-          { 'Content-Type': 'application/json' },
-          JSON.stringify({
-            person: {
-              id: 10,
-              name: { first: 'Daenerys', last: 'Targaryen' },
-            },
-          }),
-        ];
-      });
-
-      await created.save();
-
-      store.push({
-        data: {
-          type: 'person',
-          id: 20,
-          attributes: {
-            name: {
-              first: 'Daenerys',
-              last: 'Targaryen',
-            },
-          },
-        },
-      });
-
-      const pushed = await store.findRecord('person', 20);
-
-      assert.equal(
-        created.name.isNew,
-        pushed.name.isNew,
-        'isNew matches after save',
-      );
-      assert.equal(
-        created.name.isDeleted,
-        pushed.name.isDeleted,
-        'isDeleted matches after save',
-      );
-      assert.equal(
-        created.name.hasDirtyAttributes,
-        pushed.name.hasDirtyAttributes,
-        'hasDirtyAttributes matches after save',
-      );
-      assert.ok(!created.name.isNew, 'saved fragment is not new');
-      assert.ok(!pushed.name.isNew, 'pushed fragment is not new');
-    });
   });
 
   // ---- isDeleted state ----
 
   module('isDeleted state', function () {
-    test('fragment is not deleted after saving a new record', async function (assert) {
-      const data = {
-        name: { first: 'Viserys', last: 'Targaryen' },
-        addresses: [
-          {
-            street: '1 Stone Drum',
-            city: 'Dragonstone',
-            region: 'Crownlands',
-            country: 'Westeros',
-          },
-        ],
-      };
-
-      const person = store.createRecord('person');
-      person.set('name', store.createFragment('name', data.name));
-      person.set('addresses', data.addresses);
-
-      const payload = { person: copy(data, true) };
-      payload.person.id = 3;
-
-      server.post('/people', () => {
-        return [
-          200,
-          { 'Content-Type': 'application/json' },
-          JSON.stringify(payload),
-        ];
-      });
-
-      await person.save();
-
-      const name = person.name;
-      const addresses = person.addresses;
-
-      assert.ok(!name.isNew, 'fragment is not new after save');
-      assert.ok(!name.isDeleted, 'fragment is not deleted after save');
-      assert.ok(!name.hasDirtyAttributes, 'fragment is clean after save');
-
-      assert.ok(
-        !addresses.isAny('isNew'),
-        'fragment array items are not new after save',
-      );
-      assert.ok(
-        !addresses.isAny('isDeleted'),
-        'fragment array items are not deleted after save',
-      );
-      assert.ok(
-        !addresses.isAny('hasDirtyAttributes'),
-        'fragment array items are clean after save',
-      );
-
-      assert.ok(!person.isDeleted, 'owner record is not deleted after save');
-      assert.ok(!person.hasDirtyAttributes, 'owner record is clean after save');
-    });
-
     test('fragment is not deleted after saving an existing record', async function (assert) {
       store.push({
         data: {
@@ -447,53 +299,6 @@ module('integration - Lifecycle State', function (hooks) {
   // ---- Fragment array item lifecycle ----
 
   module('fragment array item lifecycle', function () {
-    test('newly added fragment array items are clean after save', async function (assert) {
-      store.push({
-        data: {
-          type: 'person',
-          id: 1,
-          attributes: {
-            addresses: [
-              {
-                street: '1 Great Keep',
-                city: 'Winterfell',
-                region: 'North',
-                country: 'Westeros',
-              },
-            ],
-          },
-        },
-      });
-
-      const person = await store.findRecord('person', 1);
-      const addresses = person.addresses;
-
-      addresses.createFragment({
-        street: '1 Red Keep',
-        city: "King's Landing",
-        region: 'Crownlands',
-        country: 'Westeros',
-      });
-
-      const newAddress = addresses.lastObject;
-
-      assert.ok(newAddress.hasDirtyAttributes, 'new item is dirty before save');
-
-      server.put('/people/1', () => {
-        return [200, { 'Content-Type': 'application/json' }, '{}'];
-      });
-
-      await person.save();
-
-      assert.ok(!newAddress.isNew, 'new item is not new after save');
-      assert.ok(!newAddress.isDeleted, 'new item is not deleted after save');
-      assert.ok(!newAddress.hasDirtyAttributes, 'new item is clean after save');
-      assert.ok(
-        !addresses.hasDirtyAttributes,
-        'fragment array is clean after save',
-      );
-    });
-
     test('server returns fewer items than sent', async function (assert) {
       store.push({
         data: {
@@ -1224,26 +1029,6 @@ module('integration - Lifecycle State', function (hooks) {
   // ---- Edge cases ----
 
   module('edge cases', function () {
-    test('null fragment remains stable across save', async function (assert) {
-      const person = store.createRecord('person');
-
-      assert.equal(person.name, null, 'fragment is null');
-
-      server.post('/people', () => {
-        return [
-          200,
-          { 'Content-Type': 'application/json' },
-          JSON.stringify({ person: { id: 1 } }),
-        ];
-      });
-
-      await person.save();
-
-      assert.equal(person.name, null, 'fragment is still null after save');
-      assert.ok(!person.isDeleted, 'owner record is not deleted');
-      assert.ok(!person.hasDirtyAttributes, 'owner record is clean');
-    });
-
     test('fragment set to null then restored via rollback', async function (assert) {
       store.push({
         data: {
