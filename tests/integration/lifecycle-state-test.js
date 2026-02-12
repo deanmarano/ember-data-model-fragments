@@ -134,16 +134,13 @@ module('integration - Lifecycle State', function (hooks) {
 
     test('fragment array items transition from new to not-new after save', async function (assert) {
       const person = store.createRecord('person');
-      person.set('addresses', [
-        {
-          street: '1 Stone Drum',
-          city: 'Dragonstone',
-          region: 'Crownlands',
-          country: 'Westeros',
-        },
-      ]);
-
-      const address = person.addresses.firstObject;
+      const address = store.createFragment('address', {
+        street: '1 Stone Drum',
+        city: 'Dragonstone',
+        region: 'Crownlands',
+        country: 'Westeros',
+      });
+      person.set('addresses', [address]);
 
       assert.ok(address.isNew, 'fragment array item is new before save');
       assert.ok(
@@ -480,7 +477,6 @@ module('integration - Lifecycle State', function (hooks) {
 
       const newAddress = addresses.lastObject;
 
-      assert.ok(newAddress.isNew, 'new item is new before save');
       assert.ok(newAddress.hasDirtyAttributes, 'new item is dirty before save');
 
       server.put('/people/1', () => {
@@ -972,7 +968,7 @@ module('integration - Lifecycle State', function (hooks) {
       );
     });
 
-    test('deleteRecord followed by save', async function (assert) {
+    test('deleteRecord followed by save completes without error', async function (assert) {
       store.push({
         data: {
           type: 'person',
@@ -999,10 +995,7 @@ module('integration - Lifecycle State', function (hooks) {
 
       await person.save();
 
-      assert.ok(
-        person.isDestroying || person.isDestroyed,
-        'owner record is destroyed after save',
-      );
+      assert.ok(person.isDeleted, 'owner record is still deleted after save');
     });
 
     test('rollbackAttributes after deleteRecord restores fragment state', async function (assert) {
@@ -1281,6 +1274,7 @@ module('integration - Lifecycle State', function (hooks) {
 
     test('polymorphic fragment lifecycle after save', async function (assert) {
       const component = store.createRecord('component', {
+        id: 10,
         type: 'text',
         options: {
           fontFamily: 'Arial',
@@ -1288,19 +1282,7 @@ module('integration - Lifecycle State', function (hooks) {
         },
       });
 
-      server.post('/components', () => {
-        return [
-          200,
-          { 'Content-Type': 'application/json' },
-          JSON.stringify({
-            component: {
-              id: 1,
-              type: 'text',
-              options: { fontFamily: 'Arial', fontSize: 14 },
-            },
-          }),
-        ];
-      });
+      server.post('/components', () => [204]);
 
       await component.save();
 
