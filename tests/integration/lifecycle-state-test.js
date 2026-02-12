@@ -37,7 +37,10 @@ module('integration - Lifecycle State', function (hooks) {
 
       assert.ok(name.isNew, 'created fragment is new');
       assert.ok(!name.isDeleted, 'created fragment is not deleted');
-      assert.ok(name.hasDirtyAttributes, 'created fragment has dirty attributes');
+      assert.ok(
+        name.hasDirtyAttributes,
+        'created fragment has dirty attributes',
+      );
     });
 
     test('store.push produces a non-new fragment', async function (assert) {
@@ -84,7 +87,10 @@ module('integration - Lifecycle State', function (hooks) {
       const address = person.addresses.firstObject;
 
       assert.ok(!address.isNew, 'pushed fragment array item is not new');
-      assert.ok(!address.isDeleted, 'pushed fragment array item is not deleted');
+      assert.ok(
+        !address.isDeleted,
+        'pushed fragment array item is not deleted',
+      );
       assert.ok(
         !address.hasDirtyAttributes,
         'pushed fragment array item is clean',
@@ -292,10 +298,7 @@ module('integration - Lifecycle State', function (hooks) {
       );
 
       assert.ok(!person.isDeleted, 'owner record is not deleted after save');
-      assert.ok(
-        !person.hasDirtyAttributes,
-        'owner record is clean after save',
-      );
+      assert.ok(!person.hasDirtyAttributes, 'owner record is clean after save');
     });
 
     test('fragment is not deleted after saving an existing record', async function (assert) {
@@ -335,10 +338,7 @@ module('integration - Lifecycle State', function (hooks) {
 
       assert.ok(!address.isNew, 'fragment array item is not new');
       assert.ok(!address.isDeleted, 'fragment array item is not deleted');
-      assert.ok(
-        !address.hasDirtyAttributes,
-        'fragment array item is clean',
-      );
+      assert.ok(!address.hasDirtyAttributes, 'fragment array item is clean');
     });
 
     test('fragment removed from array is not deleted', async function (assert) {
@@ -443,10 +443,7 @@ module('integration - Lifecycle State', function (hooks) {
         !address.isDeleted,
         'fragment array item is not deleted after 204 save',
       );
-      assert.ok(
-        !address.hasDirtyAttributes,
-        'fragment array item is clean',
-      );
+      assert.ok(!address.hasDirtyAttributes, 'fragment array item is clean');
     });
   });
 
@@ -484,10 +481,7 @@ module('integration - Lifecycle State', function (hooks) {
       const newAddress = addresses.lastObject;
 
       assert.ok(newAddress.isNew, 'new item is new before save');
-      assert.ok(
-        newAddress.hasDirtyAttributes,
-        'new item is dirty before save',
-      );
+      assert.ok(newAddress.hasDirtyAttributes, 'new item is dirty before save');
 
       server.put('/people/1', () => {
         return [200, { 'Content-Type': 'application/json' }, '{}'];
@@ -497,10 +491,7 @@ module('integration - Lifecycle State', function (hooks) {
 
       assert.ok(!newAddress.isNew, 'new item is not new after save');
       assert.ok(!newAddress.isDeleted, 'new item is not deleted after save');
-      assert.ok(
-        !newAddress.hasDirtyAttributes,
-        'new item is clean after save',
-      );
+      assert.ok(!newAddress.hasDirtyAttributes, 'new item is clean after save');
       assert.ok(
         !addresses.hasDirtyAttributes,
         'fragment array is clean after save',
@@ -556,11 +547,7 @@ module('integration - Lifecycle State', function (hooks) {
 
       const addresses = person.addresses;
 
-      assert.equal(
-        addresses.length,
-        1,
-        'array has correct number of items',
-      );
+      assert.equal(addresses.length, 1, 'array has correct number of items');
       assert.ok(
         !addresses.firstObject.isDeleted,
         'remaining item is not deleted',
@@ -624,10 +611,7 @@ module('integration - Lifecycle State', function (hooks) {
       assert.equal(addresses.length, 2, 'array has correct number of items');
       assert.ok(!addresses.isAny('isNew'), 'no items are new');
       assert.ok(!addresses.isAny('isDeleted'), 'no items are deleted');
-      assert.ok(
-        !addresses.isAny('hasDirtyAttributes'),
-        'all items are clean',
-      );
+      assert.ok(!addresses.isAny('hasDirtyAttributes'), 'all items are clean');
       assert.ok(!person.hasDirtyAttributes, 'owner record is clean');
     });
   });
@@ -680,10 +664,7 @@ module('integration - Lifecycle State', function (hooks) {
       assert.ok(!orders.hasDirtyAttributes, 'orders array is clean');
       assert.ok(!orders.isAny('isNew'), 'orders are not new');
       assert.ok(!orders.isAny('isDeleted'), 'orders are not deleted');
-      assert.ok(
-        !orders.isAny('hasDirtyAttributes'),
-        'all orders are clean',
-      );
+      assert.ok(!orders.isAny('hasDirtyAttributes'), 'all orders are clean');
 
       assert.ok(!products.hasDirtyAttributes, 'products array is clean');
       assert.ok(!products.isAny('isNew'), 'products are not new');
@@ -770,10 +751,7 @@ module('integration - Lifecycle State', function (hooks) {
 
       assert.ok(!passenger.isNew, 'passenger is not new after save');
       assert.ok(!passenger.isDeleted, 'passenger is not deleted after save');
-      assert.ok(
-        !passenger.hasDirtyAttributes,
-        'passenger is clean after save',
-      );
+      assert.ok(!passenger.hasDirtyAttributes, 'passenger is clean after save');
 
       assert.ok(!name.isNew, 'name is not new after save');
       assert.ok(!name.isDeleted, 'name is not deleted after save');
@@ -813,14 +791,14 @@ module('integration - Lifecycle State', function (hooks) {
 
       assert.ok(!name.isNew, 'fragment is not new after first save');
       assert.ok(!name.isDeleted, 'fragment is not deleted after first save');
-      assert.ok(
-        !name.hasDirtyAttributes,
-        'fragment is clean after first save',
-      );
+      assert.ok(!name.hasDirtyAttributes, 'fragment is clean after first save');
 
       name.set('first', 'King Robb');
 
-      assert.ok(name.hasDirtyAttributes, 'fragment is dirty after modification');
+      assert.ok(
+        name.hasDirtyAttributes,
+        'fragment is dirty after modification',
+      );
 
       server.put('/people/5', () => {
         return [200, { 'Content-Type': 'application/json' }, '{}'];
@@ -863,10 +841,7 @@ module('integration - Lifecycle State', function (hooks) {
 
       assert.ok(!name.isNew, 'fragment is not new after first save');
       assert.ok(!name.isDeleted, 'fragment is not deleted after first save');
-      assert.ok(
-        !name.hasDirtyAttributes,
-        'fragment is clean after first save',
-      );
+      assert.ok(!name.hasDirtyAttributes, 'fragment is clean after first save');
 
       name.set('last', 'Goldenhand');
       await person.save();
@@ -990,10 +965,7 @@ module('integration - Lifecycle State', function (hooks) {
       person.deleteRecord();
 
       assert.ok(person.isDeleted, 'owner record is deleted');
-      assert.ok(
-        !name.isDeleted,
-        'fragment is not independently deleted',
-      );
+      assert.ok(!name.isDeleted, 'fragment is not independently deleted');
       assert.ok(
         !address.isDeleted,
         'fragment array item is not independently deleted',
@@ -1011,7 +983,6 @@ module('integration - Lifecycle State', function (hooks) {
         },
       });
 
-      // eslint-disable-next-line no-undef
       server.delete('/people/1', () => {
         return [204];
       });
@@ -1064,17 +1035,11 @@ module('integration - Lifecycle State', function (hooks) {
       person.rollbackAttributes();
 
       assert.ok(!person.isDeleted, 'owner is not deleted after rollback');
-      assert.ok(
-        !person.hasDirtyAttributes,
-        'owner is clean after rollback',
-      );
+      assert.ok(!person.hasDirtyAttributes, 'owner is clean after rollback');
 
       assert.ok(!name.isNew, 'fragment is not new after rollback');
       assert.ok(!name.isDeleted, 'fragment is not deleted after rollback');
-      assert.ok(
-        !name.hasDirtyAttributes,
-        'fragment is clean after rollback',
-      );
+      assert.ok(!name.hasDirtyAttributes, 'fragment is clean after rollback');
 
       assert.ok(
         !address.isNew,
@@ -1126,10 +1091,7 @@ module('integration - Lifecycle State', function (hooks) {
       );
       assert.ok(!originalName.isNew, 'original fragment is not new');
       assert.ok(!originalName.isDeleted, 'original fragment is not deleted');
-      assert.ok(
-        !originalName.hasDirtyAttributes,
-        'original fragment is clean',
-      );
+      assert.ok(!originalName.hasDirtyAttributes, 'original fragment is clean');
       assert.equal(originalName.first, 'Theon', 'original value is restored');
     });
 
@@ -1156,10 +1118,7 @@ module('integration - Lifecycle State', function (hooks) {
 
       assert.ok(!name.isNew, 'fragment is not new after rollback');
       assert.ok(!name.isDeleted, 'fragment is not deleted after rollback');
-      assert.ok(
-        !name.hasDirtyAttributes,
-        'fragment is clean after rollback',
-      );
+      assert.ok(!name.hasDirtyAttributes, 'fragment is clean after rollback');
       assert.equal(name.first, 'Bran', 'first name is restored');
       assert.equal(name.last, 'Stark', 'last name is restored');
     });
@@ -1200,14 +1159,8 @@ module('integration - Lifecycle State', function (hooks) {
       assert.equal(addresses.length, 1, 'array has 1 item after rollback');
       assert.ok(!originalAddress.isNew, 'original item is not new');
       assert.ok(!originalAddress.isDeleted, 'original item is not deleted');
-      assert.ok(
-        !originalAddress.hasDirtyAttributes,
-        'original item is clean',
-      );
-      assert.ok(
-        !addresses.hasDirtyAttributes,
-        'fragment array is clean',
-      );
+      assert.ok(!originalAddress.hasDirtyAttributes, 'original item is clean');
+      assert.ok(!addresses.hasDirtyAttributes, 'fragment array is clean');
       assert.ok(!person.hasDirtyAttributes, 'owner record is clean');
     });
 
@@ -1247,10 +1200,7 @@ module('integration - Lifecycle State', function (hooks) {
 
       assert.ok(!name.isNew, 'fragment is not new after rollback');
       assert.ok(!name.isDeleted, 'fragment is not deleted after rollback');
-      assert.ok(
-        !name.hasDirtyAttributes,
-        'fragment is clean after rollback',
-      );
+      assert.ok(!name.hasDirtyAttributes, 'fragment is clean after rollback');
       assert.equal(name.first, 'Cersei', 'fragment value is restored');
 
       assert.ok(
@@ -1356,10 +1306,7 @@ module('integration - Lifecycle State', function (hooks) {
 
       const options = component.options;
 
-      assert.ok(
-        !options.isNew,
-        'polymorphic fragment is not new after save',
-      );
+      assert.ok(!options.isNew, 'polymorphic fragment is not new after save');
       assert.ok(
         !options.isDeleted,
         'polymorphic fragment is not deleted after save',
