@@ -13,12 +13,26 @@ import FragmentRecordDataProxy from './fragment-record-data-proxy';
 export default class FragmentCache {
   version = '2';
 
-  constructor(storeWrapper) {
+  constructor(storeWrapper, innerCache) {
     this.__storeWrapper = storeWrapper;
-    this.__innerCache = new JSONAPICache(storeWrapper);
+    this.__innerCache = innerCache || new JSONAPICache(storeWrapper);
     this.__fragmentState = new FragmentStateManager(storeWrapper);
     this.__recordDataProxies = new Map();
     this.__storeValidated = false;
+
+    // When wrapping a pre-existing cache (e.g. in warp-drive 5.8+), we need to
+    // intercept upsert calls that the inner cache makes on itself during put().
+    // Without this, fragment data goes directly into the inner cache as regular
+    // attributes and our FragmentStateManager never sees it.
+    if (innerCache) {
+      // Find the actual cache - it may be wrapped in a CacheManager (debug mode)
+      const actualCache = innerCache.___cache || innerCache;
+      const self = this;
+      this.__originalInnerUpsert = actualCache.upsert.bind(actualCache);
+      actualCache.upsert = function (identifier, data, calculateChanges) {
+        return self.upsert(identifier, data, calculateChanges);
+      };
+    }
   }
 
   get store() {
@@ -347,7 +361,12 @@ export default class FragmentCache {
     }
 
     // Let inner cache handle non-fragment attributes
-    const changedKeys = this.__innerCache.upsert(
+    // Use __originalInnerUpsert when available to avoid infinite recursion
+    // (since we may have patched innerCache.upsert to route through us)
+    const innerUpsert =
+      this.__originalInnerUpsert ||
+      this.__innerCache.upsert.bind(this.__innerCache);
+    const changedKeys = innerUpsert(
       identifier,
       data,
       hasRecordOrCalculateChanges,
@@ -402,12 +421,15 @@ export default class FragmentCache {
         regularOptions,
       );
 
-      // Push fragment data to our fragment state manager AFTER the cache entry exists
+      // Push fragment data to our fragment state manager AFTER the cache entry exists.
+      // Skip notifications for new records to avoid autotracking errors when
+      // records are created during rendering (e.g., in component constructors).
       if (hasFragmentData) {
         this.__fragmentState.pushFragmentData(
           identifier,
           { attributes: fragmentData },
           false,
+          true, // skipNotify - new record, no observers yet
         );
       }
 
