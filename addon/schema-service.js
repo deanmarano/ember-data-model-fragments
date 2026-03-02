@@ -22,9 +22,7 @@ import {
 let FragmentSchemaService = null;
 
 if (
-  macroCondition(
-    dependencySatisfies('ember-data', '>=4.13.0-alpha.0 <5.0.0'),
-  )
+  macroCondition(dependencySatisfies('ember-data', '>=4.13.0-alpha.0 <5.0.0'))
 ) {
   const { ModelSchemaProvider } = importSync('@ember-data/model');
 

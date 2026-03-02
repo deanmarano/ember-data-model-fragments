@@ -63,7 +63,11 @@ function _patchSchemaService(schemaService, store) {
  *
  * @private
  */
-function serializerForFragment(owner, normalizedModelName, originalSerializerFor) {
+function serializerForFragment(
+  owner,
+  normalizedModelName,
+  originalSerializerFor,
+) {
   let serializer = owner.lookup(`serializer:${normalizedModelName}`);
 
   if (serializer !== undefined) {
@@ -142,7 +146,11 @@ function _maybeWrapSerializerFor(store) {
       if (typeof modelName === 'string') {
         const normalizedModelName = dasherize(modelName);
         if (store.isFragment(normalizedModelName)) {
-          return serializerForFragment(getOwner(store), normalizedModelName, originalFn);
+          return serializerForFragment(
+            getOwner(store),
+            normalizedModelName,
+            originalFn,
+          );
         }
       }
       return originalFn.apply(store, args);
@@ -184,9 +192,7 @@ export default class FragmentStore extends Store {
     // Wrap it immediately after construction.
     // In ember-data 4.13, serializerFor is also a class field but the
     // built-in fallback chain already works correctly for fragments.
-    if (
-      macroCondition(dependencySatisfies('ember-data', '>=5.0.0'))
-    ) {
+    if (macroCondition(dependencySatisfies('ember-data', '>=5.0.0'))) {
       _maybeWrapSerializerFor(this);
     }
   }
