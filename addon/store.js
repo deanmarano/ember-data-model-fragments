@@ -270,18 +270,24 @@ export default class FragmentStore extends Store {
 
   /**
    * Override teardownRecord to handle fragments in a disconnected state.
+   * In ember-data 4.12+, fragments can end up disconnected during unload,
+   * and the default teardownRecord fails when trying to destroy them.
    *
    * @method teardownRecord
    * @param {Model} record
    * @public
    */
   teardownRecord(record) {
+    // Check if record is a fragment (by checking if it has no id or by model type)
+    // We need to handle the case where the fragment's store is disconnected
     if (record.isDestroyed || record.isDestroying) {
       return;
     }
     try {
       record.destroy();
     } catch (e) {
+      // If the error is about disconnected state, just let it go
+      // The fragment will be cleaned up by ember's garbage collection
       if (
         e?.message?.includes?.('disconnected state') ||
         e?.message?.includes?.('cannot utilize the store')
@@ -294,10 +300,21 @@ export default class FragmentStore extends Store {
 
   /**
     Create a new fragment that does not yet have an owner record.
+    The properties passed to this method are set on the newly created
+    fragment.
+
+    To create a new instance of the `name` fragment:
+
+    ```js
+    store.createFragment('name', {
+      first: 'Alex',
+      last: 'Routé'
+    });
+    ```
 
     @method createFragment
-    @param {String} modelName
-    @param {Object} props
+    @param {String} modelName - The type of fragment to create
+    @param {Object} props - A hash of properties to set on the newly created fragment
     @return {Fragment} fragment
     @public
   */
@@ -306,10 +323,13 @@ export default class FragmentStore extends Store {
       `The '${modelName}' model must be a subclass of MF.Fragment`,
       this.isFragment(modelName),
     );
+    // Create a new identifier for the fragment
     const identifier = this.identifierCache.createIdentifierForNewRecord({
       type: modelName,
     });
+    // Signal to cache that this is a new record
     this.cache.clientDidCreate(identifier, props || {});
+    // Get the record instance
     const record = this._instanceCache.getRecord(identifier, props);
 
     // In warp-drive 5.8+, getRecord no longer accepts createRecordArgs.
@@ -329,7 +349,7 @@ export default class FragmentStore extends Store {
     Returns true if the modelName is a fragment, false if not
 
     @method isFragment
-    @param {String} modelName
+    @param {String} modelName - The modelName to check if a fragment
     @return {Boolean}
     @public
   */
