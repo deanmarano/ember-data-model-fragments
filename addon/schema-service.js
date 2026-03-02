@@ -17,7 +17,9 @@ import {
  * 3. Transform fragment metadata to be recognized by the schema service
  * 4. Add transformed fragments to the schema
  *
- * NOTE: This class only exists in ember-data 4.13+. For 4.12, this module exports null.
+ * NOTE: This class only exists in ember-data 4.13.x. For 4.12, this module exports null.
+ * For warp-drive 5.8+, ModelSchemaProvider no longer exists, so runtime patching is used
+ * instead (see ext.js _patchSchemaService).
  *
  * @class FragmentSchemaService
  * @extends ModelSchemaProvider
@@ -25,7 +27,9 @@ import {
  */
 let FragmentSchemaService = null;
 
-if (macroCondition(dependencySatisfies('ember-data', '>=4.13.0-alpha.0'))) {
+if (
+  macroCondition(dependencySatisfies('ember-data', '>=4.13.0-alpha.0 <5.0.0'))
+) {
   const { ModelSchemaProvider } = importSync('@ember-data/model');
 
   FragmentSchemaService = class FragmentSchemaService extends (

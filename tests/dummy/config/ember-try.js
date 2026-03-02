@@ -53,9 +53,11 @@ module.exports = async function () {
           devDependencies: {
             'ember-data': '~4.12.0',
             '@ember-data/json-api': '~4.12.0',
+            '@ember-data/legacy-compat': '~4.12.0',
             '@ember-data/model': '~4.12.0',
             '@ember-data/serializer': '~4.12.0',
             '@ember-data/store': '~4.12.0',
+            '@warp-drive/build-config': null,
             // ember-data 4.12 has peer deps on ember-inflector 4.x
             'ember-inflector': '^4.0.3',
           },
@@ -67,9 +69,26 @@ module.exports = async function () {
           devDependencies: {
             'ember-data': '~4.13.0-alpha.9',
             '@ember-data/json-api': '~4.13.0-alpha.9',
+            '@ember-data/legacy-compat': '~4.13.0-alpha.9',
             '@ember-data/model': '~4.13.0-alpha.9',
             '@ember-data/serializer': '~4.13.0-alpha.9',
             '@ember-data/store': '~4.13.0-alpha.9',
+            '@warp-drive/build-config': null,
+          },
+        },
+      },
+      {
+        name: 'ember-data-5.8',
+        npm: {
+          devDependencies: {
+            'ember-data': '~5.8.0',
+            '@ember-data/json-api': '~5.8.0',
+            '@ember-data/legacy-compat': '~5.8.0',
+            '@ember-data/model': '~5.8.0',
+            '@ember-data/serializer': '~5.8.0',
+            '@ember-data/store': '~5.8.0',
+            '@warp-drive/build-config': '~5.8.0',
+            'ember-inflector': '^4.0.0',
           },
         },
       },

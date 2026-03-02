@@ -18,7 +18,6 @@ setupDeprecationWorkflow({
      *
      * And copy the handlers here
      */
-    /* example: */
-    /* { handler: 'silence', matchId: 'template-action' }, */
+    { handler: 'silence', matchId: 'ember-data:schema-service-updates' },
   ],
 });
