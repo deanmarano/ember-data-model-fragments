@@ -53,9 +53,7 @@ module.exports = async function () {
           devDependencies: {
             'ember-data': '~4.12.0',
             '@ember-data/json-api': '~4.12.0',
-            '@ember-data/model': '~4.12.0',
-            '@ember-data/serializer': '~4.12.0',
-            '@ember-data/store': '~4.12.0',
+            '@ember-data/legacy-compat': '~4.12.0',
             // ember-data 4.12 has peer deps on ember-inflector 4.x
             'ember-inflector': '^4.0.3',
           },
@@ -67,9 +65,7 @@ module.exports = async function () {
           devDependencies: {
             'ember-data': '~4.13.0-alpha.9',
             '@ember-data/json-api': '~4.13.0-alpha.9',
-            '@ember-data/model': '~4.13.0-alpha.9',
-            '@ember-data/serializer': '~4.13.0-alpha.9',
-            '@ember-data/store': '~4.13.0-alpha.9',
+            '@ember-data/legacy-compat': '~4.13.0-alpha.9',
           },
         },
       },

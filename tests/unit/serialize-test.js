@@ -6,8 +6,6 @@ import FragmentSerializer from 'ember-data-model-fragments/serializer';
 import Person from 'dummy/models/person';
 import { fragmentArray, array } from 'ember-data-model-fragments/attributes';
 import Pretender from 'pretender';
-// eslint-disable-next-line ember/use-ember-data-rfc-395-imports
-import DS from 'ember-data';
 let store, owner;
 
 module('unit - Serialization', function (hooks) {
@@ -77,7 +75,7 @@ module('unit - Serialization', function (hooks) {
       serialize(snapshot) {
         const name = snapshot.attr('name');
         assert.ok(
-          name instanceof DS.Snapshot,
+          name && typeof name.attr === 'function',
           'fragment snapshot attribute is a snapshot',
         );
 
@@ -93,7 +91,7 @@ module('unit - Serialization', function (hooks) {
           'fragment array attribute is an array',
         );
         assert.ok(
-          houses[0] instanceof DS.Snapshot,
+          houses[0] && typeof houses[0].attr === 'function',
           'fragment array attribute is an array of snapshots',
         );
         assert.equal(
