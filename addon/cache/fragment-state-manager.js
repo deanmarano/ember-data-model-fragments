@@ -847,7 +847,7 @@ export default class FragmentStateManager {
     return changedKeys;
   }
 
-  pushFragmentData(identifier, data, calculateChange) {
+  pushFragmentData(identifier, data, calculateChange, skipNotify) {
     let changedFragmentKeys;
     const behaviors = this._getBehaviors(identifier);
     const subFragmentsToProcess = [];
@@ -882,13 +882,18 @@ export default class FragmentStateManager {
 
       Object.assign(fragmentData, newCanonicalFragments);
 
-      // Always notify for changed keys so computed properties are invalidated
-      changedFragmentKeys.forEach((key) => {
-        // Notify the storeWrapper that the fragment attribute changed
-        this.__storeWrapper.notifyChange(identifier, 'attributes', key);
-        const arrayCache = this.__fragmentArrayCache.get(identifier.lid);
-        arrayCache?.[key]?.notify();
-      });
+      // Notify for changed keys so computed properties are invalidated.
+      // Skip notifications during clientDidCreate (new records) to avoid
+      // autotracking mutation-after-consumption errors when records are
+      // created during rendering (e.g., in component constructors).
+      if (!skipNotify) {
+        changedFragmentKeys.forEach((key) => {
+          // Notify the storeWrapper that the fragment attribute changed
+          this.__storeWrapper.notifyChange(identifier, 'attributes', key);
+          const arrayCache = this.__fragmentArrayCache.get(identifier.lid);
+          arrayCache?.[key]?.notify();
+        });
+      }
     }
 
     return calculateChange ? changedFragmentKeys || [] : [];

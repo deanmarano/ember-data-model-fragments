@@ -31,6 +31,21 @@ Object.defineProperty(Snapshot.prototype, '_attributes', {
     // This is needed because ember-data caches __attributes and reuses it
     const attrs = Object.create(null);
 
+    // In warp-drive 5.8+, eachAttribute only iterates kind === 'attribute',
+    // so fragment attributes are missing. Add them from the cache.
+    const cache = this._store.cache;
+    if (cache && typeof cache.getFragment === 'function') {
+      const schema = this._store.schema;
+      if (schema) {
+        const definitions = schema.attributesDefinitionFor(this.identifier);
+        for (const [key, definition] of Object.entries(definitions)) {
+          if (definition.isFragment && !(key in cachedAttrs)) {
+            cachedAttrs[key] = cache.getAttr(this.identifier, key);
+          }
+        }
+      }
+    }
+
     Object.keys(cachedAttrs).forEach((key) => {
       const attr = cachedAttrs[key];
 
@@ -57,5 +72,30 @@ Object.defineProperty(Snapshot.prototype, '_attributes', {
     return attrs;
   },
 });
+
+// Patch Model.attributes to include fragment-kind computed properties.
+// In warp-drive 5.8+, isAttributeSchema checks `kind === 'attribute'` which
+// excludes our fragment kinds.
+const _originalAttributesDescriptor = Object.getOwnPropertyDescriptor(
+  Model,
+  'attributes',
+);
+if (_originalAttributesDescriptor && _originalAttributesDescriptor.get) {
+  Object.defineProperty(Model, 'attributes', {
+    get() {
+      const map = _originalAttributesDescriptor.get.call(this);
+      // Add any fragment attributes that were excluded
+      this.eachComputedProperty((name, meta) => {
+        if (meta.isFragment && !map.has(name)) {
+          meta.key = name;
+          meta.name = name;
+          map.set(name, meta);
+        }
+      });
+      return map;
+    },
+    configurable: true,
+  });
+}
 
 export { Model };

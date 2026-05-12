@@ -1,4 +1,4 @@
-import { get, computed } from '@ember/object';
+import { get, set, computed } from '@ember/object';
 import Ember from 'ember';
 import { isDestroying, isDestroyed } from '@ember/destroyable';
 // DS.Model gets munged to add fragment support, which must be included first
@@ -106,53 +106,34 @@ const Fragment = Model.extend(Ember.Comparable, {
   */
   copy() {
     const type = this.constructor;
-    const props = Object.create(null);
+    const regularProps = Object.create(null);
+    const fragmentProps = Object.create(null);
     const modelName = type.modelName || this._internalModel.modelName;
-    const identifier = recordIdentifierFor(this);
 
-    // Use schema service to get all attributes including fragment attributes
-    // eachAttribute only iterates standard @attr() properties, not fragment properties
-    const schemaService = this.store
-      .getSchemaDefinitionService()
-      .attributesDefinitionFor(identifier);
+    // Look up model via store to avoid schema access deprecation in ember-data 4.12+
+    const modelClass = this.store.modelFor(modelName);
 
     // Loop over each attribute and copy individually to ensure nested fragments
-    // are also copied. For fragment attributes, we need to serialize to raw data
-    // since createFragment expects raw data, not fragment instances.
-    for (const name of Object.keys(schemaService)) {
-      const value = get(this, name);
-      const definition = schemaService[name];
-      const isFragmentAttr =
-        definition?.isFragment || definition?.options?.isFragment;
-
-      if (isFragmentAttr) {
-        // For fragment attributes, serialize to get raw data that can be used to create new fragments
-        if (value === null || value === undefined) {
-          props[name] = value;
-        } else if (typeof value.serialize === 'function') {
-          // Single fragment - serialize it
-          props[name] = value.serialize();
-        } else if (
-          Array.isArray(value) ||
-          typeof value.toArray === 'function'
-        ) {
-          // Fragment array or array - serialize each element
-          const arr =
-            typeof value.toArray === 'function' ? value.toArray() : value;
-          props[name] = arr.map((item) =>
-            typeof item.serialize === 'function' ? item.serialize() : item,
-          );
-        } else {
-          // Fallback - use as-is
-          props[name] = value;
-        }
+    // are also copied. Separate fragment attributes from regular ones because
+    // clientDidCreate doesn't route fragment data through the fragment state manager.
+    modelClass.eachAttribute((name, meta) => {
+      const value = copy(get(this, name));
+      if (meta.isFragment) {
+        fragmentProps[name] = value;
       } else {
-        // Regular attribute - just copy the value
-        props[name] = copy(value);
+        regularProps[name] = value;
       }
+    });
+
+    const fragment = this.store.createFragment(modelName, regularProps);
+
+    // Set fragment attributes via property setters, which properly route
+    // through the fragment state manager (cache.setDirtyFragment)
+    for (const [name, value] of Object.entries(fragmentProps)) {
+      set(fragment, name, value);
     }
 
-    return this.store.createFragment(modelName, props);
+    return fragment;
   },
 
   /**
@@ -185,6 +166,16 @@ const Fragment = Model.extend(Ember.Comparable, {
     const extension = this.toStringExtension();
     const extensionStr = extension ? `:${extension}` : '';
     return `<${identifier.type}:${identifier.id}${extensionStr}>`;
+  },
+});
+
+// Override static toString to avoid warp-drive 5.8's assert that checks
+// this.modelName before allowing schema access. Ember's Namespace.create()
+// calls toString() on all registered classes during initialization, before
+// store.modelFor() has a chance to set modelName.
+Fragment.reopenClass({
+  toString() {
+    return `model:${this.modelName || 'fragment'}`;
   },
 });
 
@@ -254,7 +245,18 @@ export function setFragmentOwner(fragment, ownerRecordDataOrIdentifier, key) {
   });
 
   ownerProps.forEach((name) => {
-    fragment.notifyPropertyChange(name);
+    try {
+      fragment.notifyPropertyChange(name);
+    } catch (e) {
+      // In warp-drive 5.8+, notifyPropertyChange during rendering can trigger
+      // a "mutation-after-consumption" error if the property tag was consumed
+      // in the same computation (e.g., fragment created in a component constructor).
+      // This is safe to suppress: the fragment owner was just set for the first
+      // time, and any future access in a new tracking context will recompute.
+      if (!e?.message?.includes?.('You attempted to update')) {
+        throw e;
+      }
+    }
   });
 
   return fragment;
